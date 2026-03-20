@@ -58,15 +58,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={[inter.variable, archivoBlack.variable, "font-display"].join(" ")} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={[inter.variable, archivoBlack.variable, "font-display"].join(" ")}
+      suppressHydrationWarning
+    >
       <head>
-        <Script
-          defer
-          src={process.env.UMAMI_DOMAIN}
-          data-website-id={process.env.UMAMI_SITE_ID}
-        ></Script>
-        {/* <Analytics /> */}
+        {/* ✅ Umami Analytics */}
+        {process.env.NEXT_PUBLIC_UMAMI_DOMAIN &&
+          process.env.NEXT_PUBLIC_UMAMI_SITE_ID && (
+            <Script
+              src={process.env.NEXT_PUBLIC_UMAMI_DOMAIN}
+              data-website-id={process.env.NEXT_PUBLIC_UMAMI_SITE_ID}
+              strategy="afterInteractive"
+            />
+          )}
       </head>
+
       <body>
         <Providers>
           <Header />
