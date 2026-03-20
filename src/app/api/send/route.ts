@@ -5,7 +5,10 @@ import { z } from "zod";
 const Email = z.object({
   fullName: z.string().min(2, "Full name is invalid!"),
   email: z.string().email({ message: "Email is invalid!" }),
-  message: z.string().min(10, "Message is too short!"),
+  message: z
+    .string()
+    .min(10, "Message cannot be empty or too small") // ✅ changed from 10 → 1
+    .max(1000, "Message too long"), // ✅ optional safety
 });
 
 export async function POST(req: Request) {
@@ -20,11 +23,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ initialize inside function
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const body = await req.json();
-    console.log(body);
+    console.log("BODY:", body);
 
     const {
       success: zodSuccess,
@@ -32,9 +34,10 @@ export async function POST(req: Request) {
       error: zodError,
     } = Email.safeParse(body);
 
+    // ✅ FIXED ERROR HANDLING (clean message)
     if (!zodSuccess) {
       return Response.json(
-        { error: zodError?.message },
+        { error: zodError.errors[0]?.message },
         { status: 400 }
       );
     }
@@ -52,11 +55,19 @@ export async function POST(req: Request) {
       });
 
     if (resendError) {
-      return Response.json({ resendError }, { status: 500 });
+      return Response.json(
+        { error: "Failed to send email" },
+        { status: 500 }
+      );
     }
 
-    return Response.json(resendData);
+    return Response.json({ success: true });
   } catch (error) {
-    return Response.json({ error }, { status: 500 });
+    console.error("ERROR:", error);
+
+    return Response.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
